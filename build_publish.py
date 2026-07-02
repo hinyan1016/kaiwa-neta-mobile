@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import base64
+import hashlib
 import json
 import os
 import subprocess
@@ -29,6 +30,7 @@ HERE = Path(__file__).resolve().parent
 SOURCE_DIR = HERE.parent / "会話ネタ"
 OUT_FILE = HERE / "data.enc.json"
 PASS_FILE = HERE / ".passphrase.txt"
+HASH_FILE = HERE / ".last_content_hash"  # git管理外。無変更時の再push防止用
 PBKDF2_ITER = 310_000
 JST = timezone(timedelta(hours=9))
 
@@ -84,8 +86,21 @@ def main() -> None:
 
     passphrase = load_passphrase()
     files = collect_files()
+
+    # ノート内容＋パスフレーズが前回ビルドと同一なら何もしない
+    # （暗号化はソルトが毎回変わるため data.enc.json の比較では検知できない）
+    digest = hashlib.sha256(
+        (passphrase + "\0" + json.dumps(
+            [[f["path"], f["content"]] for f in files], ensure_ascii=False
+        )).encode("utf-8")
+    ).hexdigest()
+    if OUT_FILE.is_file() and HASH_FILE.is_file() and HASH_FILE.read_text().strip() == digest:
+        print(f"[OK] 変更なし（{len(files)}件・ビルド/push不要）")
+        return
+
     payload = {"generated": datetime.now(JST).isoformat(timespec="seconds"), "files": files}
     OUT_FILE.write_text(json.dumps(encrypt(payload, passphrase), indent=1), encoding="utf-8")
+    HASH_FILE.write_text(digest, encoding="utf-8")
     print(f"[OK] {len(files)}件を暗号化 -> {OUT_FILE.name} ({OUT_FILE.stat().st_size:,} bytes)")
 
     if args.push:
