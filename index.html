@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="会話ネタ">
+<meta name="robots" content="noindex, nofollow">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>会話ネタ</title>
+<style>
+:root{
+  --bg:#f5f6f8; --card:#ffffff; --text:#1c2733; --sub:#66768a;
+  --accent:#2f6fb3; --accent-soft:#e8f0f9; --border:#e2e6ec;
+  --quote-bg:#f2f7fc; --quote-bar:#8fb4d9; --code-bg:#eef1f5;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#14181d; --card:#1e242b; --text:#e6ebf1; --sub:#94a3b5;
+    --accent:#6ea8e0; --accent-soft:#22303f; --border:#2c343d;
+    --quote-bg:#202a35; --quote-bar:#4a7099; --code-bg:#262e37;
+  }
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0; padding:0; background:var(--bg); color:var(--text);
+  font-family:"Hiragino Sans","Yu Gothic UI","Meiryo",sans-serif;
+  font-size:16px; line-height:1.75; -webkit-text-size-adjust:100%;}
+button{font-family:inherit;}
+
+/* ── ロック画面 ── */
+#lock{min-height:100vh; min-height:100dvh; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; padding:24px;
+  padding-top:calc(24px + env(safe-area-inset-top));}
+#lock .logo{font-size:52px; margin-bottom:8px;}
+#lock h1{font-size:22px; margin:0 0 24px; font-weight:700;}
+#lock form{width:100%; max-width:340px; display:flex; flex-direction:column; gap:14px;}
+#lock input[type=password]{width:100%; padding:14px 16px; font-size:17px;
+  border:1px solid var(--border); border-radius:12px; background:var(--card); color:var(--text);}
+#lock input[type=password]:focus{outline:none; border-color:var(--accent);}
+#lock button{padding:14px; font-size:17px; font-weight:700; color:#fff;
+  background:var(--accent); border:none; border-radius:12px; cursor:pointer;}
+#lock label{display:flex; align-items:center; gap:8px; font-size:14px; color:var(--sub);}
+#lock .err{color:#c0392b; font-size:14px; min-height:1.5em; margin:0; text-align:center;}
+
+/* ── ヘッダー ── */
+header{position:sticky; top:0; z-index:10; background:var(--bg);
+  padding:calc(10px + env(safe-area-inset-top)) 16px 10px;
+  display:flex; align-items:center; gap:10px; border-bottom:1px solid var(--border);}
+header .back{border:none; background:none; color:var(--accent); font-size:17px;
+  padding:6px 8px 6px 0; cursor:pointer; white-space:nowrap; display:none;}
+header .htitle{font-size:17px; font-weight:700; flex:1; overflow:hidden;
+  text-overflow:ellipsis; white-space:nowrap;}
+header .lockbtn{border:none; background:none; font-size:20px; cursor:pointer; padding:4px;}
+
+/* ── 一覧 ── */
+#listView{padding:12px 16px calc(32px + env(safe-area-inset-bottom));
+  max-width:720px; margin:0 auto;}
+#search{width:100%; padding:11px 14px; font-size:16px; margin-bottom:14px;
+  border:1px solid var(--border); border-radius:12px; background:var(--card); color:var(--text);}
+#search:focus{outline:none; border-color:var(--accent);}
+.group{font-size:13px; font-weight:700; color:var(--sub); margin:18px 4px 8px;}
+.card{background:var(--card); border:1px solid var(--border); border-radius:14px;
+  padding:14px 16px; margin-bottom:10px; cursor:pointer;}
+.card .t{font-weight:700; font-size:16px;}
+.card .d{font-size:13px; color:var(--sub); margin-top:3px;}
+.empty{text-align:center; color:var(--sub); padding:40px 0;}
+#meta{text-align:center; font-size:12px; color:var(--sub); margin-top:24px;}
+
+/* ── 本文 ── */
+#noteView{padding:16px 18px calc(48px + env(safe-area-inset-bottom));
+  max-width:720px; margin:0 auto; word-wrap:break-word; overflow-wrap:break-word;}
+#noteView h1{font-size:22px; line-height:1.45; margin:8px 0 16px;
+  padding-bottom:10px; border-bottom:2px solid var(--accent);}
+#noteView h2{font-size:19px; margin:28px 0 10px; padding-left:10px;
+  border-left:4px solid var(--accent);}
+#noteView h3{font-size:17px; margin:22px 0 8px; color:var(--accent);}
+#noteView h4{font-size:16px; margin:18px 0 6px;}
+#noteView p{margin:10px 0;}
+#noteView ul,#noteView ol{margin:10px 0; padding-left:24px;}
+#noteView li{margin:4px 0;}
+#noteView blockquote{margin:12px 0; padding:10px 14px; background:var(--quote-bg);
+  border-left:4px solid var(--quote-bar); border-radius:0 10px 10px 0;}
+#noteView blockquote p:first-child{margin-top:0;}
+#noteView blockquote p:last-child{margin-bottom:0;}
+#noteView hr{border:none; border-top:1px solid var(--border); margin:24px 0;}
+#noteView table{border-collapse:collapse; width:100%; margin:12px 0; font-size:14px;
+  display:block; overflow-x:auto;}
+#noteView th,#noteView td{border:1px solid var(--border); padding:7px 10px; text-align:left;}
+#noteView th{background:var(--accent-soft); font-weight:700; white-space:nowrap;}
+#noteView code{background:var(--code-bg); border-radius:5px; padding:1px 6px;
+  font-size:0.9em; font-family:ui-monospace,Menlo,Consolas,monospace;}
+#noteView a{color:var(--accent);}
+.hidden{display:none !important;}
+</style>
+</head>
+<body>
+
+<div id="lock">
+  <div class="logo">💬</div>
+  <h1>会話ネタ</h1>
+  <form id="lockForm">
+    <input type="password" id="pass" placeholder="パスフレーズ" autocomplete="current-password">
+    <label><input type="checkbox" id="remember">この端末で記憶する</label>
+    <p class="err" id="lockErr"></p>
+    <button type="submit">開く</button>
+  </form>
+</div>
+
+<div id="app" class="hidden">
+  <header>
+    <button class="back" id="backBtn">‹ 一覧</button>
+    <div class="htitle" id="htitle">会話ネタ</div>
+    <button class="lockbtn" id="lockBtn" title="ロック">🔒</button>
+  </header>
+  <div id="listView">
+    <input type="search" id="search" placeholder="検索（タイトル・本文）">
+    <div id="list"></div>
+    <div id="meta"></div>
+  </div>
+  <div id="noteView" class="hidden"></div>
+</div>
+
+<script>
+"use strict";
+var DATA_URL = "data.enc.json";
+var LS_KEY = "kaiwaNetaPass";
+var payload = null;   // {generated, files:[{path,title,mtime,content}]}
+
+/* ---------- 復号 ---------- */
+function b64buf(s){
+  var bin = atob(s), a = new Uint8Array(bin.length);
+  for (var i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i);
+  return a;
+}
+async function decryptPayload(enc, pass){
+  var keyMat = await crypto.subtle.importKey("raw", new TextEncoder().encode(pass),
+    {name:"PBKDF2"}, false, ["deriveKey"]);
+  var key = await crypto.subtle.deriveKey(
+    {name:"PBKDF2", salt:b64buf(enc.salt), iterations:enc.iter, hash:"SHA-256"},
+    keyMat, {name:"AES-GCM", length:256}, false, ["decrypt"]);
+  var plain = await crypto.subtle.decrypt({name:"AES-GCM", iv:b64buf(enc.iv)}, key, b64buf(enc.ct));
+  return JSON.parse(new TextDecoder().decode(plain));
+}
+async function fetchEnc(){
+  var res = await fetch(DATA_URL + "?t=" + Date.now(), {cache:"no-store"});
+  if (!res.ok) throw new Error("fetch " + res.status);
+  return res.json();
+}
+
+/* ---------- Markdown（簡易レンダラ） ---------- */
+function esc(s){
+  return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+function inline(s){
+  s = esc(s);
+  s = s.replace(/`([^`]+)`/g, "<code>$1</code>");
+  s = s.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+  s = s.replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g,
+    '<a href="$2" target="_blank" rel="noopener">$1</a>');
+  return s;
+}
+function renderMd(src){
+  var lines = src.split(/\r?\n/), out = [], i = 0;
+  function isTableRow(l){ return /^\s*\|.*\|\s*$/.test(l); }
+  function isSepRow(l){ return /^\s*\|[\s:|-]+\|\s*$/.test(l); }
+  while (i < lines.length){
+    var line = lines[i];
+    if (/^\s*$/.test(line)){ i++; continue; }
+    var m;
+    if ((m = line.match(/^(#{1,4})\s+(.*)$/))){
+      out.push("<h" + m[1].length + ">" + inline(m[2]) + "</h" + m[1].length + ">"); i++; continue;
+    }
+    if (/^\s*(-{3,}|\*{3,})\s*$/.test(line)){ out.push("<hr>"); i++; continue; }
+    if (/^>/.test(line)){
+      var q = [];
+      while (i < lines.length && (/^>/.test(lines[i]) || (/^\s*$/.test(lines[i]) && /^>/.test(lines[i+1] || "")))){
+        q.push(lines[i].replace(/^>\s?/, "")); i++;
+      }
+      out.push("<blockquote>" + renderMd(q.join("\n")) + "</blockquote>"); continue;
+    }
+    if (isTableRow(line) && isSepRow(lines[i+1] || "")){
+      var cells = function(l){ return l.replace(/^\s*\|/, "").replace(/\|\s*$/, "").split("|"); };
+      var html = "<table><thead><tr>";
+      cells(line).forEach(function(c){ html += "<th>" + inline(c.trim()) + "</th>"; });
+      html += "</tr></thead><tbody>";
+      i += 2;
+      while (i < lines.length && isTableRow(lines[i])){
+        html += "<tr>";
+        cells(lines[i]).forEach(function(c){ html += "<td>" + inline(c.trim()) + "</td>"; });
+        html += "</tr>"; i++;
+      }
+      out.push(html + "</tbody></table>"); continue;
+    }
+    if (/^\s*[-*]\s+/.test(line)){
+      var ul = "<ul>";
+      while (i < lines.length && /^\s*[-*]\s+/.test(lines[i])){
+        ul += "<li>" + inline(lines[i].replace(/^\s*[-*]\s+/, "")) + "</li>"; i++;
+      }
+      out.push(ul + "</ul>"); continue;
+    }
+    if (/^\s*\d+\.\s+/.test(line)){
+      var ol = "<ol>";
+      while (i < lines.length && /^\s*\d+\.\s+/.test(lines[i])){
+        ol += "<li>" + inline(lines[i].replace(/^\s*\d+\.\s+/, "")) + "</li>"; i++;
+      }
+      out.push(ol + "</ol>"); continue;
+    }
+    var para = [];
+    while (i < lines.length && !/^\s*$/.test(lines[i]) && !/^(#{1,4}\s|>|\s*[-*]\s|\s*\d+\.\s)/.test(lines[i]) && !isTableRow(lines[i])){
+      para.push(lines[i]); i++;
+    }
+    if (para.length) out.push("<p>" + inline(para.join("\n")).replace(/\n/g, "<br>") + "</p>");
+    else i++;
+  }
+  return out.join("\n");
+}
+
+/* ---------- 画面 ---------- */
+var $ = function(id){ return document.getElementById(id); };
+
+function fmtDate(iso){
+  var d = new Date(iso);
+  if (isNaN(d)) return "";
+  return d.getFullYear() + "/" + (d.getMonth() + 1) + "/" + d.getDate();
+}
+function groupOf(path){
+  var parts = path.split("/");
+  return parts.length > 1 ? parts.slice(0, -1).join(" / ") : "メモ";
+}
+function showList(){
+  $("noteView").classList.add("hidden");
+  $("listView").classList.remove("hidden");
+  $("backBtn").style.display = "none";
+  $("htitle").textContent = "会話ネタ";
+  window.scrollTo(0, 0);
+}
+function renderList(){
+  var kw = $("search").value.trim().toLowerCase();
+  var files = payload.files.filter(function(f){
+    if (!kw) return true;
+    return (f.title + "\n" + f.content).toLowerCase().indexOf(kw) !== -1;
+  });
+  var groups = {};
+  files.forEach(function(f){
+    var g = groupOf(f.path);
+    (groups[g] = groups[g] || []).push(f);
+  });
+  var order = Object.keys(groups).sort(function(a, b){
+    if (a === "メモ") return -1;
+    if (b === "メモ") return 1;
+    return a.localeCompare(b, "ja");
+  });
+  var el = $("list");
+  el.innerHTML = "";
+  order.forEach(function(g){
+    var h = document.createElement("div");
+    h.className = "group"; h.textContent = g; el.appendChild(h);
+    groups[g].sort(function(a, b){ return b.path.localeCompare(a.path, "ja"); });
+    groups[g].forEach(function(f){
+      var c = document.createElement("div");
+      c.className = "card";
+      c.innerHTML = '<div class="t"></div><div class="d"></div>';
+      c.querySelector(".t").textContent = f.title;
+      c.querySelector(".d").textContent = f.path.split("/").pop().replace(/\.md$/, "");
+      c.onclick = function(){ location.hash = "#/note/" + encodeURIComponent(f.path); };
+      el.appendChild(c);
+    });
+  });
+  if (!files.length) el.innerHTML = '<div class="empty">該当なし</div>';
+  $("meta").textContent = "全" + payload.files.length + "件 ・ データ更新 " + fmtDate(payload.generated);
+}
+function showNote(path){
+  var f = null;
+  payload.files.forEach(function(x){ if (x.path === path) f = x; });
+  if (!f){ showList(); return; }
+  $("listView").classList.add("hidden");
+  $("noteView").classList.remove("hidden");
+  $("backBtn").style.display = "block";
+  $("htitle").textContent = f.title;
+  $("noteView").innerHTML = renderMd(f.content);
+  window.scrollTo(0, 0);
+}
+function route(){
+  if (!payload) return;
+  var m = location.hash.match(/^#\/note\/(.+)$/);
+  if (m) showNote(decodeURIComponent(m[1]));
+  else showList();
+}
+
+/* ---------- 起動・解錠 ---------- */
+async function unlock(pass, remember){
+  var enc = await fetchEnc();
+  payload = await decryptPayload(enc, pass);   // 失敗時は例外
+  if (remember) localStorage.setItem(LS_KEY, pass);
+  $("lock").classList.add("hidden");
+  $("app").classList.remove("hidden");
+  renderList();
+  route();
+}
+$("lockForm").addEventListener("submit", function(e){
+  e.preventDefault();
+  $("lockErr").textContent = "";
+  var pass = $("pass").value;
+  if (!pass) return;
+  unlock(pass, $("remember").checked).catch(function(err){
+    $("lockErr").textContent = /fetch/.test(String(err))
+      ? "データを取得できません（オフライン？）"
+      : "パスフレーズが違います";
+  });
+});
+$("lockBtn").addEventListener("click", function(){
+  localStorage.removeItem(LS_KEY);
+  location.hash = "";
+  location.reload();
+});
+$("backBtn").addEventListener("click", function(){ location.hash = ""; });
+$("search").addEventListener("input", renderList);
+window.addEventListener("hashchange", route);
+
+(function(){
+  var saved = localStorage.getItem(LS_KEY);
+  if (saved){
+    unlock(saved, false).catch(function(){
+      localStorage.removeItem(LS_KEY);
+    });
+  }
+})();
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
+</script>
+</body>
+</html>
