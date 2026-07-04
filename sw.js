@@ -1,5 +1,5 @@
 /* 会話ネタ PWA service worker */
-var CACHE_NAME = "kaiwa-neta-v1";
+var CACHE_NAME = "kaiwa-neta-v2"; /* index.html更新時は必ずバージョンを上げる */
 var ASSETS = [
   "./",
   "./index.html",

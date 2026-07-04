@@ -7,27 +7,48 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="会話ネタ">
 <meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" id="metaTheme" content="#f5f6f8">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <title>会話ネタ</title>
 <style>
+/* テーマ構造:
+   :root                     … ライト（デフォルト値）
+   :root[data-theme="dark"]  … 手動ダーク
+   @media dark + [data-theme="auto"] … OS設定連動ダーク（値は手動ダークと同一） */
 :root{
   --bg:#f5f6f8; --card:#ffffff; --text:#1c2733; --sub:#66768a;
-  --accent:#2f6fb3; --accent-soft:#e8f0f9; --border:#e2e6ec;
+  --accent:#3577c2; --accent-soft:#e8f0f9; --border:#e2e6ec;
+  --card-border:transparent;
   --quote-bg:#f2f7fc; --quote-bar:#8fb4d9; --code-bg:#eef1f5;
+  --mark-bg:#ffe89b; --mark-fg:#5c4a00;
+  --shadow:0 1px 3px rgba(20,30,45,.07), 0 4px 14px rgba(20,30,45,.05);
+}
+:root[data-theme="dark"]{
+  --bg:#14181d; --card:#1e242b; --text:#e6ebf1; --sub:#94a3b5;
+  --accent:#6ea8e0; --accent-soft:#22303f; --border:#2c343d;
+  --card-border:#2c343d;
+  --quote-bg:#202a35; --quote-bar:#4a7099; --code-bg:#262e37;
+  --mark-bg:#7a5c00; --mark-fg:#ffe08a;
+  --shadow:0 1px 3px rgba(0,0,0,.3), 0 4px 14px rgba(0,0,0,.25);
 }
 @media (prefers-color-scheme: dark){
-  :root{
+  :root[data-theme="auto"]{
     --bg:#14181d; --card:#1e242b; --text:#e6ebf1; --sub:#94a3b5;
     --accent:#6ea8e0; --accent-soft:#22303f; --border:#2c343d;
+    --card-border:#2c343d;
     --quote-bg:#202a35; --quote-bar:#4a7099; --code-bg:#262e37;
+    --mark-bg:#7a5c00; --mark-fg:#ffe08a;
+    --shadow:0 1px 3px rgba(0,0,0,.3), 0 4px 14px rgba(0,0,0,.25);
   }
 }
 *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
 html,body{margin:0; padding:0; background:var(--bg); color:var(--text);
   font-family:"Hiragino Sans","Yu Gothic UI","Meiryo",sans-serif;
-  font-size:16px; line-height:1.75; -webkit-text-size-adjust:100%;}
+  font-size:16px; line-height:1.75; -webkit-text-size-adjust:100%;
+  transition:background-color .2s ease, color .2s ease;}
 button{font-family:inherit;}
+mark{background:var(--mark-bg); color:var(--mark-fg); border-radius:2px; padding:0 1px;}
 
 /* ── ロック画面 ── */
 #lock{min-height:100vh; min-height:100dvh; display:flex; flex-direction:column;
@@ -37,34 +58,50 @@ button{font-family:inherit;}
 #lock h1{font-size:22px; margin:0 0 24px; font-weight:700;}
 #lock form{width:100%; max-width:340px; display:flex; flex-direction:column; gap:14px;}
 #lock input[type=password]{width:100%; padding:14px 16px; font-size:17px;
-  border:1px solid var(--border); border-radius:12px; background:var(--card); color:var(--text);}
-#lock input[type=password]:focus{outline:none; border-color:var(--accent);}
+  border:1px solid var(--border); border-radius:14px; background:var(--card); color:var(--text);
+  transition:border-color .15s ease, box-shadow .15s ease;}
+#lock input[type=password]:focus{outline:none; border-color:var(--accent);
+  box-shadow:0 0 0 3px var(--accent-soft);}
 #lock button{padding:14px; font-size:17px; font-weight:700; color:#fff;
-  background:var(--accent); border:none; border-radius:12px; cursor:pointer;}
+  background:var(--accent); border:none; border-radius:14px; cursor:pointer;
+  box-shadow:var(--shadow); transition:transform .12s ease;}
+#lock button:active{transform:scale(.98);}
 #lock label{display:flex; align-items:center; gap:8px; font-size:14px; color:var(--sub);}
 #lock .err{color:#c0392b; font-size:14px; min-height:1.5em; margin:0; text-align:center;}
 
 /* ── ヘッダー ── */
-header{position:sticky; top:0; z-index:10; background:var(--bg);
+header{position:sticky; top:0; z-index:10;
+  background:color-mix(in srgb, var(--bg) 85%, transparent);
+  -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px);
   padding:calc(10px + env(safe-area-inset-top)) 16px 10px;
   display:flex; align-items:center; gap:10px; border-bottom:1px solid var(--border);}
 header .back{border:none; background:none; color:var(--accent); font-size:17px;
   padding:6px 8px 6px 0; cursor:pointer; white-space:nowrap; display:none;}
 header .htitle{font-size:17px; font-weight:700; flex:1; overflow:hidden;
   text-overflow:ellipsis; white-space:nowrap;}
-header .lockbtn{border:none; background:none; font-size:20px; cursor:pointer; padding:4px;}
+header .themebtn, header .lockbtn{border:none; background:none; font-size:20px;
+  cursor:pointer; padding:4px; line-height:1;}
 
 /* ── 一覧 ── */
 #listView{padding:12px 16px calc(32px + env(safe-area-inset-bottom));
   max-width:720px; margin:0 auto;}
-#search{width:100%; padding:11px 14px; font-size:16px; margin-bottom:14px;
-  border:1px solid var(--border); border-radius:12px; background:var(--card); color:var(--text);}
-#search:focus{outline:none; border-color:var(--accent);}
-.group{font-size:13px; font-weight:700; color:var(--sub); margin:18px 4px 8px;}
-.card{background:var(--card); border:1px solid var(--border); border-radius:14px;
-  padding:14px 16px; margin-bottom:10px; cursor:pointer;}
-.card .t{font-weight:700; font-size:16px;}
+#search{width:100%; padding:11px 14px 11px 40px; font-size:16px; margin-bottom:14px;
+  border:1px solid var(--border); border-radius:14px; background:var(--card); color:var(--text);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238a94a3' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cline x1='21' y1='21' x2='16.5' y2='16.5'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:14px center;
+  transition:border-color .15s ease, box-shadow .15s ease;}
+#search:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft);}
+.hitcount{font-size:13px; color:var(--sub); margin:2px 4px 10px;}
+.group{font-size:12px; font-weight:700; color:var(--sub); margin:18px 4px 8px;
+  letter-spacing:.08em; opacity:.85;}
+.card{background:var(--card); border:1px solid var(--card-border); border-radius:16px;
+  padding:14px 16px; margin-bottom:10px; cursor:pointer;
+  box-shadow:var(--shadow); transition:transform .12s ease;}
+.card:active{transform:scale(.98);}
+.card .t{font-weight:700; font-size:16px; letter-spacing:.01em;}
 .card .d{font-size:13px; color:var(--sub); margin-top:3px;}
+.card .snip{font-size:13px; color:var(--sub); margin-top:6px; line-height:1.55;
+  overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;}
 .empty{text-align:center; color:var(--sub); padding:40px 0;}
 #meta{text-align:center; font-size:12px; color:var(--sub); margin-top:24px;}
 
@@ -81,7 +118,7 @@ header .lockbtn{border:none; background:none; font-size:20px; cursor:pointer; pa
 #noteView ul,#noteView ol{margin:10px 0; padding-left:24px;}
 #noteView li{margin:4px 0;}
 #noteView blockquote{margin:12px 0; padding:10px 14px; background:var(--quote-bg);
-  border-left:4px solid var(--quote-bar); border-radius:0 10px 10px 0;}
+  border-left:4px solid var(--quote-bar); border-radius:0 12px 12px 0;}
 #noteView blockquote p:first-child{margin-top:0;}
 #noteView blockquote p:last-child{margin-bottom:0;}
 #noteView hr{border:none; border-top:1px solid var(--border); margin:24px 0;}
@@ -112,10 +149,11 @@ header .lockbtn{border:none; background:none; font-size:20px; cursor:pointer; pa
   <header>
     <button class="back" id="backBtn">‹ 一覧</button>
     <div class="htitle" id="htitle">会話ネタ</div>
+    <button class="themebtn" id="themeBtn" title="テーマ切替">🌗</button>
     <button class="lockbtn" id="lockBtn" title="ロック">🔒</button>
   </header>
   <div id="listView">
-    <input type="search" id="search" placeholder="検索（タイトル・本文）">
+    <input type="search" id="search" placeholder="検索（タイトル・本文／空白区切りでAND）">
     <div id="list"></div>
     <div id="meta"></div>
   </div>
@@ -126,7 +164,29 @@ header .lockbtn{border:none; background:none; font-size:20px; cursor:pointer; pa
 "use strict";
 var DATA_URL = "data.enc.json";
 var LS_KEY = "kaiwaNetaPass";
+var THEME_KEY = "kaiwaNetaTheme";
 var payload = null;   // {generated, files:[{path,title,mtime,content}]}
+
+/* ---------- テーマ（auto → light → dark 循環） ---------- */
+var THEME_ORDER = ["auto", "light", "dark"];
+var THEME_ICON = { auto: "🌗", light: "☀️", dark: "🌙" };
+var THEME_NAME = { auto: "自動", light: "ライト", dark: "ダーク" };
+function currentTheme(){
+  var t = localStorage.getItem(THEME_KEY);
+  return THEME_ORDER.indexOf(t) !== -1 ? t : "auto";
+}
+function applyTheme(t){
+  document.documentElement.dataset.theme = t;
+  var btn = document.getElementById("themeBtn");
+  if (btn){ btn.textContent = THEME_ICON[t]; btn.title = "テーマ: " + THEME_NAME[t]; }
+  /* ステータスバー色を実際の背景色に同期 */
+  var meta = document.getElementById("metaTheme");
+  if (meta){
+    var bg = getComputedStyle(document.documentElement).getPropertyValue("--bg").trim();
+    if (bg) meta.content = bg;
+  }
+}
+document.documentElement.dataset.theme = currentTheme(); /* 描画前に確定（ちらつき防止） */
 
 /* ---------- 復号 ---------- */
 function b64buf(s){
@@ -217,6 +277,66 @@ function renderMd(src){
   return out.join("\n");
 }
 
+/* ---------- 検索（正規化・AND・スニペット・ハイライト） ---------- */
+/* 検索用正規化: 全角英数記号→半角, カタカナ→ひらがな, 小文字化。
+   1文字→1文字変換のみで構成し文字数を変えない（ヒット位置＝原文位置を保証）。
+   ※ デスクトップ版 kaiwa-neta-app の normalizeJa と同一仕様。変更時は両方更新すること。 */
+function normalizeJa(s){
+  var out = "";
+  for (var ch of String(s)){
+    var c = ch.codePointAt(0);
+    if (c >= 0xFF01 && c <= 0xFF5E) c -= 0xFEE0;      /* 全角英数記号 → 半角 */
+    else if (c === 0x3000) c = 0x20;                   /* 全角スペース → 半角 */
+    else if (c >= 0x30A1 && c <= 0x30F6) c -= 0x60;    /* カタカナ → ひらがな */
+    var lower = String.fromCodePoint(c).toLowerCase();
+    out += (lower.length === 1) ? lower : String.fromCodePoint(c); /* 長さ保存を保証 */
+  }
+  return out;
+}
+/* 複数キーワードの全出現を <mark> でハイライトしたHTMLを返す。
+   XSS安全性の不変条件: 生成HTMLに入るのは esc() 済み文字列とリテラル <mark></mark> のみ。 */
+function highlightText(text, kws){
+  var norm = normalizeJa(text), ranges = [];
+  kws.forEach(function(kw){
+    var i = 0;
+    while ((i = norm.indexOf(kw, i)) !== -1){ ranges.push([i, i + kw.length]); i += kw.length; }
+  });
+  if (!ranges.length) return esc(text);
+  ranges.sort(function(a, b){ return a[0] - b[0]; });
+  var merged = [ranges[0]];
+  for (var i = 1; i < ranges.length; i++){
+    var last = merged[merged.length - 1];
+    if (ranges[i][0] <= last[1]) last[1] = Math.max(last[1], ranges[i][1]);
+    else merged.push(ranges[i]);
+  }
+  var html = "", pos = 0;
+  merged.forEach(function(r){
+    html += esc(text.slice(pos, r[0])) + "<mark>" + esc(text.slice(r[0], r[1])) + "</mark>";
+    pos = r[1];
+  });
+  return html + esc(text.slice(pos));
+}
+/* 本文中の最初のヒット位置の前後を原文から切り出す */
+function makeSnippet(f, kws){
+  var pos = -1, hitLen = 0;
+  for (var k = 0; k < kws.length; k++){
+    var p = f._normContent.indexOf(kws[k]);
+    if (p !== -1 && (pos === -1 || p < pos)){ pos = p; hitLen = kws[k].length; }
+  }
+  if (pos === -1) return "";
+  var start = Math.max(0, pos - 20);
+  var end = Math.min(f.content.length, pos + hitLen + 60);
+  var s = f.content.slice(start, end).replace(/\s+/g, " ");
+  return (start > 0 ? "…" : "") + s + (end < f.content.length ? "…" : "");
+}
+/* 復号直後に呼ぶ: 検索用の正規化キャッシュを前計算 */
+function buildSearchIndex(){
+  payload.files.forEach(function(f){
+    f._normTitle = normalizeJa(f.title);
+    f._normContent = normalizeJa(f.content);
+  });
+}
+
 /* ---------- 画面 ---------- */
 var $ = function(id){ return document.getElementById(id); };
 
@@ -237,11 +357,22 @@ function showList(){
   window.scrollTo(0, 0);
 }
 function renderList(){
-  var kw = $("search").value.trim().toLowerCase();
+  var raw = $("search").value.trim();
+  var kws = normalizeJa(raw).split(/\s+/).filter(Boolean);
   var files = payload.files.filter(function(f){
-    if (!kw) return true;
-    return (f.title + "\n" + f.content).toLowerCase().indexOf(kw) !== -1;
+    if (!kws.length) return true;
+    return kws.every(function(kw){
+      return f._normTitle.indexOf(kw) !== -1 || f._normContent.indexOf(kw) !== -1;
+    });
   });
+  var el = $("list");
+  el.innerHTML = "";
+  if (kws.length){
+    var hc = document.createElement("div");
+    hc.className = "hitcount";
+    hc.textContent = files.length + "件ヒット";
+    el.appendChild(hc);
+  }
   var groups = {};
   files.forEach(function(f){
     var g = groupOf(f.path);
@@ -252,8 +383,6 @@ function renderList(){
     if (b === "メモ") return 1;
     return a.localeCompare(b, "ja");
   });
-  var el = $("list");
-  el.innerHTML = "";
   order.forEach(function(g){
     var h = document.createElement("div");
     h.className = "group"; h.textContent = g; el.appendChild(h);
@@ -262,13 +391,33 @@ function renderList(){
       var c = document.createElement("div");
       c.className = "card";
       c.innerHTML = '<div class="t"></div><div class="d"></div>';
-      c.querySelector(".t").textContent = f.title;
-      c.querySelector(".d").textContent = f.path.split("/").pop().replace(/\.md$/, "");
+      var fname = f.path.split("/").pop().replace(/\.md$/, "");
+      var dateStr = fmtDate(f.mtime);
+      if (kws.length){
+        /* 検索中: タイトルをハイライト＋本文スニペット表示（HTMLは esc() 済みのみ） */
+        c.querySelector(".t").innerHTML = highlightText(f.title, kws);
+        c.querySelector(".d").textContent = fname + (dateStr ? " ・ " + dateStr : "");
+        var snip = makeSnippet(f, kws);
+        if (snip){
+          var sd = document.createElement("div");
+          sd.className = "snip";
+          sd.innerHTML = highlightText(snip, kws);
+          c.appendChild(sd);
+        }
+      } else {
+        c.querySelector(".t").textContent = f.title;
+        c.querySelector(".d").textContent = fname + (dateStr ? " ・ " + dateStr : "");
+      }
       c.onclick = function(){ location.hash = "#/note/" + encodeURIComponent(f.path); };
       el.appendChild(c);
     });
   });
-  if (!files.length) el.innerHTML = '<div class="empty">該当なし</div>';
+  if (!files.length){
+    var em = document.createElement("div");
+    em.className = "empty";
+    em.textContent = kws.length ? "「" + raw + "」に一致するノートはありません" : "該当なし";
+    el.appendChild(em);
+  }
   $("meta").textContent = "全" + payload.files.length + "件 ・ データ更新 " + fmtDate(payload.generated);
 }
 function showNote(path){
@@ -293,6 +442,7 @@ function route(){
 async function unlock(pass, remember){
   var enc = await fetchEnc();
   payload = await decryptPayload(enc, pass);   // 失敗時は例外
+  buildSearchIndex();
   if (remember) localStorage.setItem(LS_KEY, pass);
   $("lock").classList.add("hidden");
   $("app").classList.remove("hidden");
@@ -315,10 +465,29 @@ $("lockBtn").addEventListener("click", function(){
   location.hash = "";
   location.reload();
 });
+$("themeBtn").addEventListener("click", function(){
+  var next = THEME_ORDER[(THEME_ORDER.indexOf(currentTheme()) + 1) % THEME_ORDER.length];
+  localStorage.setItem(THEME_KEY, next);
+  applyTheme(next);
+});
 $("backBtn").addEventListener("click", function(){ location.hash = ""; });
-$("search").addEventListener("input", renderList);
+
+/* 検索はデバウンス（150ms）して再描画 */
+var searchTimer = null;
+$("search").addEventListener("input", function(){
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(renderList, 150);
+});
 window.addEventListener("hashchange", route);
 
+/* OSのライト/ダーク切替に追従（autoのときのステータスバー色更新） */
+if (window.matchMedia){
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function(){
+    applyTheme(currentTheme());
+  });
+}
+
+applyTheme(currentTheme());
 (function(){
   var saved = localStorage.getItem(LS_KEY);
   if (saved){

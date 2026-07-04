@@ -105,7 +105,8 @@ def main() -> None:
 
     if args.push:
         run = lambda *cmd: subprocess.run(cmd, cwd=HERE, check=True)
-        run("git", "add", "data.enc.json")
+        # アプリ本体の変更（index.html/sw.js等）も同時にデプロイされるよう add 対象に含める
+        run("git", "add", "data.enc.json", "index.html", "sw.js", "manifest.webmanifest")
         diff = subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=HERE)
         if diff.returncode == 0:
             print("[OK] 変更なし（push不要）")
